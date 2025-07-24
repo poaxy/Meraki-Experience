@@ -1,5 +1,0 @@
-{
-  "name": "meraki-experience",
-  "version": "1.0.0",
-  "description": "Dynamically enhances the experience for *.meraki.com/* pages based on device model or page title."
-}
