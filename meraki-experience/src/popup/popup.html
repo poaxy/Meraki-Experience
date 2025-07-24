@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meraki Experience</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="theme-toggle-row">
+    <button id="theme-toggle" aria-label="Toggle theme">
+      <img id="theme-icon" src="sun.svg" alt="Toggle theme" width="22" height="22" />
+    </button>
+  </div>
+  <div class="container">
+    <h1 class="title">Meraki Experience</h1>
+    <div class="toggle-row">
+      <label class="switch">
+        <input type="checkbox" id="toggle-enabled">
+        <span class="slider"></span>
+      </label>
+      <span id="toggle-label">Enabled</span>
+    </div>
+    <div class="device-name-row">
+      <span id="device-name-label">Use device model/mac for tabs</span>
+      <label class="switch device-switch">
+        <input type="checkbox" id="device-name-toggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="copy-link-row">
+      <span id="copy-link-label">Enable copy link button on docs</span>
+      <label class="switch copy-link-switch">
+        <input type="checkbox" id="copy-link-toggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div id="status-message" class="status"></div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
