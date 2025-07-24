@@ -43,8 +43,5 @@ A browser extension for Chrome, Firefox, and Safari (WebExtensions API) that dyn
 - TypeScript is recommended for future improvements
 - Follows ESLint rules for code quality
 
-## Credits
-- Icon: Derived from `cisco-meraki.jpg` (provided by user)
-
 ## License
 MIT
