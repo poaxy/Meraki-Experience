@@ -143,7 +143,8 @@ body {
   transform: translateX(16px);
 }
 #device-name-label,
-#copy-link-label {
+#copy-link-label,
+#favicon-label {
   font-size: 0.98rem;
   color: #888;
   user-select: none;

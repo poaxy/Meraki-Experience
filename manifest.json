@@ -14,8 +14,10 @@
   ],
   "content_scripts": [
     {
-      "matches": ["*://*.meraki.com/*"],
-      "exclude_matches": ["https://documentation.meraki.com/*"],
+      "matches": [
+        "https://documentation.meraki.com/*",
+        "https://*.meraki.com/*"
+      ],
       "js": ["src/content.js"]
     }
   ],

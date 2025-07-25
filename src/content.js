@@ -1,5 +1,8 @@
 // Content script
 
+// DEBUG: Log script startup and domain
+console.log('[MerakiExt] Content script loaded on', location.hostname);
+
 (function () {
   const DASHBOARD_SUFFIX = ' - Meraki Dashboard';
 
@@ -88,37 +91,26 @@
     return null;
   }
 
-  function updateTitle() {
-    if (!enabled) return;
-    let newTitle = null;
-    if (!useModelMac) {
-      const deviceName = extractDeviceName();
-      if (deviceName) {
-        newTitle = deviceName;
-      }
-    }
-    if (!newTitle) {
-      const modelAndMac = extractModelAndMacRaw();
-      if (modelAndMac && useModelMac) {
-        newTitle = `${modelAndMac.model} | ${modelAndMac.macSuffix}`;
-      } else {
-        newTitle = stripDashboardSuffix(document.title);
-      }
-    }
-    if (document.title !== newTitle) {
-      document.title = newTitle;
-    }
+  // Helper: check if on documentation.meraki.com
+  function isDocs() {
+    return location.hostname === 'documentation.meraki.com';
+  }
+  // Helper: check if on n*.meraki.com
+  function isNDashboard() {
+    return /^n\d+\.meraki\.com$/.test(location.hostname);
   }
 
-  // === Meraki Documentation Deep Link Feature ===
+  // === Only run copy link feature on documentation.meraki.com ===
   function addDocSectionLinkButtons() {
+    if (!isDocs()) return;
     if (!enableCopyLink) return;
-    if (!/^(https?:\/\/)?documentation\.meraki\.com\//.test(window.location.href)) return;
     if (window.__merakiDocLinkButtonsInjected) return;
     window.__merakiDocLinkButtonsInjected = true;
     const sections = document.querySelectorAll('div.mt-section');
+    console.log('[MerakiExt] addDocSectionLinkButtons: sections found:', sections.length);
     sections.forEach(section => {
       const headers = section.querySelectorAll('h2.editable, h3.editable, h4.editable, h5.editable, h6.editable');
+      console.log('[MerakiExt] Section', section, 'headers found:', headers.length);
       headers.forEach(header => {
         if (!header.querySelector('.meraki-doc-link-btn')) {
           // Find the id to use for this header
@@ -155,7 +147,10 @@
             if (spanWithId) id = spanWithId.id;
           }
           // If still no id, do not add the button (hide/disable for this header)
-          if (!id) return;
+          if (!id) {
+            console.log('[MerakiExt] No id found for header:', header);
+            return;
+          }
           const btn = document.createElement('button');
           btn.className = 'meraki-doc-link-btn';
           btn.title = 'Copy direct link to this section';
@@ -218,12 +213,14 @@
             });
           });
           header.appendChild(btn);
+          console.log('[MerakiExt] Injected copy link button for header:', header, 'with id:', id);
         }
       });
     });
   }
 
   function removeDocSectionLinkButtons() {
+    if (!isDocs()) return;
     document.querySelectorAll('.meraki-doc-link-btn').forEach(btn => btn.remove());
     window.__merakiDocLinkButtonsInjected = false;
   }
@@ -232,14 +229,47 @@
   const MAX_RETRIES = 10;
   const RETRY_DELAY = 500;
 
-  function tryUpdateWithRetry() {
-    updateTitle();
-    if (enableCopyLink) addDocSectionLinkButtons();
-    else removeDocSectionLinkButtons();
-    const modelAndMac = enabled ? extractModelAndMacRaw() : null;
-    if (enabled && !modelAndMac && retryCount < MAX_RETRIES) {
-      retryCount++;
-      setTimeout(tryUpdateWithRetry, RETRY_DELAY);
+  // Define updateTitle as a no-op by default
+  function updateTitle() {}
+  // Only assign real updateTitle on n*.meraki.com
+  if (isNDashboard()) {
+    updateTitle = function() {
+      if (!enabled) return;
+      let newTitle = null;
+      if (!useModelMac) {
+        const deviceName = extractDeviceName();
+        if (deviceName) {
+          newTitle = deviceName;
+        }
+      }
+      if (!newTitle) {
+        const modelAndMac = extractModelAndMacRaw();
+        if (modelAndMac && useModelMac) {
+          newTitle = `${modelAndMac.model} | ${modelAndMac.macSuffix}`;
+        } else {
+          newTitle = stripDashboardSuffix(document.title);
+        }
+      }
+      if (document.title !== newTitle) {
+        document.title = newTitle;
+      }
+    }
+  }
+
+  // Define tryUpdateWithRetry as a no-op by default
+  function tryUpdateWithRetry() {}
+
+  // Only assign real tryUpdateWithRetry on documentation.meraki.com and n*.meraki.com
+  if (isDocs() || isNDashboard()) {
+    tryUpdateWithRetry = function() {
+      updateTitle();
+      if (enableCopyLink) addDocSectionLinkButtons();
+      else removeDocSectionLinkButtons();
+      const modelAndMac = enabled ? extractModelAndMacRaw() : null;
+      if (enabled && !modelAndMac && retryCount < MAX_RETRIES) {
+        retryCount++;
+        setTimeout(tryUpdateWithRetry, RETRY_DELAY);
+      }
     }
   }
 
@@ -273,7 +303,10 @@
       enabled = response && typeof response.enabled === 'boolean' ? response.enabled : true;
       chrome.storage.sync.get(['useModelMac', 'enableCopyLink', 'enableGreenFavicon'], (result) => {
         useModelMac = !!result.useModelMac;
-        enableCopyLink = !!result.enableCopyLink;
+        enableCopyLink = result.enableCopyLink !== undefined ? !!result.enableCopyLink : true;
+        if (result.enableCopyLink === undefined) {
+          chrome.storage.sync.set({ enableCopyLink: true });
+        }
         enableGreenFavicon = result.enableGreenFavicon !== undefined ? !!result.enableGreenFavicon : true;
         if (result.enableGreenFavicon === undefined) {
           chrome.storage.sync.set({ enableGreenFavicon: true });
@@ -292,6 +325,7 @@
   });
 
   function startObserver() {
+    console.log('[MerakiExt] Setting up MutationObserver for tryUpdateWithRetry on', location.hostname);
     observer.observe(document.documentElement, {
       childList: true,
       subtree: true,
@@ -307,9 +341,16 @@
     queryInitialStateAndStart();
   }
 
-  // Set favicon to src/assets/green.png only for n*.meraki.com (e.g., n7.meraki.com)
+  // === Only run favicon and default features on n*.meraki.com ===
   function setMerakiFavicon() {
-    const nSubdomainPattern = /^n\d+\.meraki\.com$/;
+    if (!isNDashboard()) {
+      // If we are not on n*.meraki.com, always disconnect the favicon observer if it exists
+      if (faviconObserver) {
+        faviconObserver.disconnect();
+        faviconObserver = null;
+      }
+      return;
+    }
     const expectedHref = chrome.runtime.getURL('src/assets/green.png');
     // Always remove the green favicon and disconnect observer if extension is disabled
     if (!enabled) {
@@ -333,7 +374,7 @@
       });
       return;
     }
-    if (enableGreenFavicon && nSubdomainPattern.test(location.hostname)) {
+    if (enableGreenFavicon && isNDashboard()) {
       if (faviconObserver) {
         faviconObserver.disconnect();
         faviconObserver = null;
