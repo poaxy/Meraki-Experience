@@ -14,8 +14,15 @@
   ],
   "content_scripts": [
     {
-      "matches": ["*://*.meraki.com/*", "https://documentation.meraki.com/*"],
+      "matches": ["*://*.meraki.com/*"],
+      "exclude_matches": ["https://documentation.meraki.com/*"],
       "js": ["src/content.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["src/assets/green.png"],
+      "matches": ["*://*.meraki.com/*"]
     }
   ],
   "background": {

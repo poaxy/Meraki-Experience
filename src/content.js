@@ -6,6 +6,8 @@
   let enabled = true;
   let useModelMac = false;
   let enableCopyLink = false;
+  let enableGreenFavicon = true;
+  let faviconObserver = null;
 
   function stripDashboardSuffix(title) {
     if (title.endsWith(DASHBOARD_SUFFIX)) {
@@ -248,6 +250,7 @@
         retryCount = 0;
         tryUpdateWithRetry();
       }
+      setMerakiFavicon(); // Always update favicon logic on enable/disable
     }
     if (message.type === 'USE_MODEL_MAC') {
       useModelMac = message.enabled;
@@ -259,17 +262,26 @@
       retryCount = 0;
       tryUpdateWithRetry();
     }
+    if (message.type === 'ENABLE_GREEN_FAVICON') {
+      enableGreenFavicon = message.enabled;
+      setMerakiFavicon();
+    }
   });
 
   function queryInitialStateAndStart() {
     chrome.runtime.sendMessage({ type: 'GET_STATE' }, (response) => {
       enabled = response && typeof response.enabled === 'boolean' ? response.enabled : true;
-      chrome.storage.sync.get(['useModelMac', 'enableCopyLink'], (result) => {
+      chrome.storage.sync.get(['useModelMac', 'enableCopyLink', 'enableGreenFavicon'], (result) => {
         useModelMac = !!result.useModelMac;
         enableCopyLink = !!result.enableCopyLink;
+        enableGreenFavicon = result.enableGreenFavicon !== undefined ? !!result.enableGreenFavicon : true;
+        if (result.enableGreenFavicon === undefined) {
+          chrome.storage.sync.set({ enableGreenFavicon: true });
+        }
         retryCount = 0;
         tryUpdateWithRetry();
         startObserver();
+        setMerakiFavicon(); // Only call after state is loaded
       });
     });
   }
@@ -293,6 +305,62 @@
     });
   } else {
     queryInitialStateAndStart();
+  }
+
+  // Set favicon to src/assets/green.png only for n*.meraki.com (e.g., n7.meraki.com)
+  function setMerakiFavicon() {
+    const nSubdomainPattern = /^n\d+\.meraki\.com$/;
+    const expectedHref = chrome.runtime.getURL('src/assets/green.png');
+    // Always remove the green favicon and disconnect observer if extension is disabled
+    if (!enabled) {
+      if (faviconObserver) {
+        faviconObserver.disconnect();
+        faviconObserver = null;
+      }
+      document.querySelectorAll('link[rel*="icon"]').forEach(e => {
+        if (e.href === expectedHref) e.remove();
+      });
+      return;
+    }
+    // Always remove the green favicon if toggle is off
+    if (!enableGreenFavicon) {
+      if (faviconObserver) {
+        faviconObserver.disconnect();
+        faviconObserver = null;
+      }
+      document.querySelectorAll('link[rel*="icon"]').forEach(e => {
+        if (e.href === expectedHref) e.remove();
+      });
+      return;
+    }
+    if (enableGreenFavicon && nSubdomainPattern.test(location.hostname)) {
+      if (faviconObserver) {
+        faviconObserver.disconnect();
+        faviconObserver = null;
+      }
+      const setFavicon = () => {
+        const current = document.querySelector('link[rel*="icon"]');
+        if (current && current.href === expectedHref) return;
+        document.querySelectorAll('link[rel*="icon"]').forEach(e => e.remove());
+        const link = document.createElement('link');
+        link.rel = 'icon';
+        link.type = 'image/png';
+        link.href = expectedHref;
+        document.head.appendChild(link);
+      };
+      if (document.head) {
+        setFavicon();
+      } else {
+        document.addEventListener('DOMContentLoaded', setFavicon);
+      }
+      faviconObserver = new MutationObserver(setFavicon);
+      faviconObserver.observe(document.head, { childList: true });
+    } else {
+      if (faviconObserver) {
+        faviconObserver.disconnect();
+        faviconObserver = null;
+      }
+    }
   }
 })();
 
