@@ -119,11 +119,45 @@
       const headers = section.querySelectorAll('h2.editable, h3.editable, h4.editable, h5.editable, h6.editable');
       headers.forEach(header => {
         if (!header.querySelector('.meraki-doc-link-btn')) {
-          const spanWithId = section.querySelector('span[id]');
-          if (!spanWithId) return;
+          // Find the id to use for this header
+          let id = null;
+          // 1. If the header itself has an id, use it
+          if (header.id) {
+            id = header.id;
+          } else {
+            // 2. Look for a span[id] immediately before the header
+            let prev = header.previousElementSibling;
+            while (prev) {
+              if (prev.tagName === 'SPAN' && prev.id) {
+                id = prev.id;
+                break;
+              }
+              // If there's a text node or comment, skip
+              prev = prev.previousElementSibling;
+            }
+            // 3. If not found, look for a span[id] immediately after the header
+            if (!id) {
+              let next = header.nextElementSibling;
+              while (next) {
+                if (next.tagName === 'SPAN' && next.id) {
+                  id = next.id;
+                  break;
+                }
+                next = next.nextElementSibling;
+              }
+            }
+          }
+          // 4. If still not found, fallback to the first span[id] in the section (legacy behavior)
+          if (!id) {
+            const spanWithId = section.querySelector('span[id]');
+            if (spanWithId) id = spanWithId.id;
+          }
+          // If still no id, do not add the button (hide/disable for this header)
+          if (!id) return;
           const btn = document.createElement('button');
           btn.className = 'meraki-doc-link-btn';
           btn.title = 'Copy direct link to this section';
+          btn.setAttribute('aria-label', 'Copy direct link to this section');
           btn.style.marginLeft = '8px';
           btn.style.background = 'none';
           btn.style.border = 'none';
@@ -173,7 +207,6 @@
           btn.appendChild(tooltip);
           btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            const id = spanWithId.id;
             if (!id) return;
             const baseUrl = window.location.origin + window.location.pathname;
             const newUrl = `${baseUrl}#${id}`;
