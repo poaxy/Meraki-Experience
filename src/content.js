@@ -5,12 +5,15 @@ console.log('[MerakiExt] Content script loaded on', location.hostname);
 
 (function () {
   const DASHBOARD_SUFFIX = ' - Meraki Dashboard';
+  const MAX_RETRIES = 10;
+  const RETRY_DELAY = 500;
 
   let enabled = true;
   let useModelMac = false;
   let enableCopyLink = false;
   let enableGreenFavicon = true;
   let faviconObserver = null;
+  let retryCount = 0;
 
   function stripDashboardSuffix(title) {
     if (title.endsWith(DASHBOARD_SUFFIX)) {
@@ -100,7 +103,6 @@ console.log('[MerakiExt] Content script loaded on', location.hostname);
     return /^n\d+\.meraki\.com$/.test(location.hostname);
   }
 
-  // === Only run copy link feature on documentation.meraki.com ===
   function addDocSectionLinkButtons() {
     if (!isDocs()) return;
     if (!enableCopyLink) return;
@@ -225,10 +227,6 @@ console.log('[MerakiExt] Content script loaded on', location.hostname);
     window.__merakiDocLinkButtonsInjected = false;
   }
 
-  let retryCount = 0;
-  const MAX_RETRIES = 10;
-  const RETRY_DELAY = 500;
-
   // Define updateTitle as a no-op by default
   function updateTitle() {}
   // Only assign real updateTitle on n*.meraki.com
@@ -272,31 +270,6 @@ console.log('[MerakiExt] Content script loaded on', location.hostname);
       }
     }
   }
-
-  chrome.runtime.onMessage.addListener((message) => {
-    if (message.type === 'EXT_STATE') {
-      enabled = message.enabled;
-      if (enabled) {
-        retryCount = 0;
-        tryUpdateWithRetry();
-      }
-      setMerakiFavicon(); // Always update favicon logic on enable/disable
-    }
-    if (message.type === 'USE_MODEL_MAC') {
-      useModelMac = message.enabled;
-      retryCount = 0;
-      tryUpdateWithRetry();
-    }
-    if (message.type === 'ENABLE_COPY_LINK') {
-      enableCopyLink = message.enabled;
-      retryCount = 0;
-      tryUpdateWithRetry();
-    }
-    if (message.type === 'ENABLE_GREEN_FAVICON') {
-      enableGreenFavicon = message.enabled;
-      setMerakiFavicon();
-    }
-  });
 
   function queryInitialStateAndStart() {
     chrome.runtime.sendMessage({ type: 'GET_STATE' }, (response) => {
@@ -403,5 +376,39 @@ console.log('[MerakiExt] Content script loaded on', location.hostname);
       }
     }
   }
+
+  // === Text Replacement Functionality ===
+  // Listen for messages from popup for text replacement
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message.type === 'EXT_STATE') {
+      enabled = message.enabled;
+      if (enabled) {
+        retryCount = 0;
+        tryUpdateWithRetry();
+      }
+      setMerakiFavicon(); // Always update favicon logic on enable/disable
+    }
+    if (message.type === 'USE_MODEL_MAC') {
+      useModelMac = message.enabled;
+      retryCount = 0;
+      tryUpdateWithRetry();
+    }
+    if (message.type === 'ENABLE_COPY_LINK') {
+      enableCopyLink = message.enabled;
+      retryCount = 0;
+      tryUpdateWithRetry();
+    }
+    if (message.type === 'ENABLE_GREEN_FAVICON') {
+      enableGreenFavicon = message.enabled;
+      setMerakiFavicon();
+    }
+    if (message.type === 'TEXT_REPLACEMENT_TOGGLE') {
+      // This will be handled by the handy-content.js script
+      // We just need to pass it through
+    } else if (message.type === 'TEXT_REPLACEMENT_UPDATE') {
+      // This will be handled by the handy-content.js script
+      // We just need to pass it through
+    }
+  });
 })();
 

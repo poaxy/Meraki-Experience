@@ -15,8 +15,35 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   if (message.type === 'SET_STATE') {
     chrome.storage.sync.set({ enabled: message.enabled });
+    
+    // Send the state change to all tabs for text replacement functionality
+    chrome.tabs.query({}, (tabs) => {
+      for (const tab of tabs) {
+        if (tab.id) {
+          chrome.tabs.sendMessage(tab.id, { type: 'EXT_STATE', enabled: message.enabled }, () => {
+            if (chrome.runtime.lastError) {
+              // Suppress 'Could not establish connection' errors
+            }
+          });
+        }
+      }
+    });
+    
     sendResponse({ success: true });
     return true;
+  }
+  if (message.type === 'HANDY_IFRAME_REQUEST') {
+    // Inject content script into the requesting tab
+    chrome.scripting.executeScript({
+      target: { tabId: sender.tab.id },
+      files: ['src/handy-content.js']
+    }).then(() => {
+      sendResponse({ success: true });
+    }).catch(error => {
+      sendResponse({ success: false, error: error.message });
+    });
+    
+    return true; // Keep message channel open for async response
   }
 });
 

@@ -1,16 +1,19 @@
 {
   "manifest_version": 3,
   "name": "Meraki Experience",
-  "version": "1.0.0",
-  "description": "Dynamically enhances the experience for *.meraki.com/* pages based on device model or page title.",
+  "version": "1.5.0",
+  "description": "Dynamically enhances the experience for *.meraki.com/* pages based on device model or page title, with universal text replacement capabilities.",
   "permissions": [
     "activeTab",
     "storage",
-    "tabs"
+    "tabs",
+    "scripting",
+    "clipboardWrite"
   ],
   "host_permissions": [
     "*://*.meraki.com/*",
-    "https://documentation.meraki.com/*"
+    "https://documentation.meraki.com/*",
+    "<all_urls>"
   ],
   "content_scripts": [
     {
@@ -19,29 +22,51 @@
         "https://*.meraki.com/*"
       ],
       "js": ["src/content.js"]
+    },
+    {
+      "matches": [
+        "https://meraki.lightning.force.com/*",
+        "https://mail.google.com/*",
+        "https://outlook.office.com/*"
+      ],
+      "js": [
+        "src/universal-replacement.js",
+        "src/handy-content.js"
+      ],
+      "all_frames": true,
+      "run_at": "document_start"
     }
   ],
   "web_accessible_resources": [
     {
       "resources": ["src/assets/green.png"],
       "matches": ["*://*.meraki.com/*"]
+    },
+    {
+      "resources": ["src/universal-replacement.js", "src/iframe-handler.js", "src/shared-utils.js"],
+      "matches": [
+        "https://meraki.lightning.force.com/*",
+        "https://mail.google.com/*",
+        "https://outlook.office.com/*"
+      ]
     }
   ],
   "background": {
     "service_worker": "src/background.js"
   },
+  "options_page": "src/options/options.html",
   "action": {
     "default_popup": "src/popup/popup.html",
     "default_icon": {
-      "16": "src/assets/icon16.png",
-      "48": "src/assets/icon48.png",
-      "128": "src/assets/icon128.png"
+      "16": "src/assets/M-E.png",
+      "48": "src/assets/M-E.png",
+      "128": "src/assets/M-E.png"
     }
   },
   "icons": {
-    "16": "src/assets/icon16.png",
-    "48": "src/assets/icon48.png",
-    "128": "src/assets/icon128.png"
+    "16": "src/assets/M-E.png",
+    "48": "src/assets/M-E.png",
+    "128": "src/assets/M-E.png"
   },
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"

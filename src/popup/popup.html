@@ -9,7 +9,7 @@
 <body>
   <div class="theme-toggle-row">
     <button id="theme-toggle" aria-label="Toggle theme">
-      <img id="theme-icon" src="sun.svg" alt="Toggle theme" width="22" height="22" />
+      <img id="theme-icon" src="sun.png" alt="Toggle theme" width="22" height="22" />
     </button>
   </div>
   <div class="container">
@@ -41,6 +41,16 @@
         <input type="checkbox" id="favicon-toggle">
         <span class="slider"></span>
       </label>
+    </div>
+    <div class="text-replacement-row">
+      <span id="text-replacement-label">Text replacement</span>
+      <label class="switch text-replacement-switch">
+        <input type="checkbox" id="text-replacement-toggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div id="manage-text-replacement" class="manage-button-container hidden">
+      <button id="manage-text-replacement-btn" class="manage-button">Manage</button>
     </div>
     <div id="status-message" class="status"></div>
   </div>
