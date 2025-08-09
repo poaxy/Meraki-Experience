@@ -3,17 +3,25 @@ Meraki Experience Extension - Developer Guide
 
 Overview
 --------
-This document is intended for developers working on the Meraki Experience browser extension. It explains the project structure, best practices for adding new features, and important considerations to ensure code quality, feature isolation, and UI consistency.
+This document is intended for developers working on the Meraki Experience browser extension. It explains the project structure, best practices for adding new features, and important considerations to ensure code quality, feature isolation, and UI consistency while maintaining compatibility with other extensions.
 
 Directory Structure
 -------------------
 - src/
   - background.js      # Handles background tasks, extension state, and messaging
   - content.js         # Injected into Meraki sites, implements main features
+  - handy-content.js   # Handles universal text replacement functionality
+  - iframe-handler.js  # Manages iframe interactions and content
+  - shared-utils.js    # Shared utilities for text replacement functionality
+  - universal-replacement.js # Universal text replacement logic
   - popup/
     - popup.html       # Extension popup UI
     - popup.js         # Popup logic and event handling
     - popup.css        # Popup styles
+  - options/
+    - options.html     # Extension options page
+    - options.js       # Options page logic
+    - options.css      # Options page styles
   - assets/            # Icons and images used by the extension
 - manifest.json        # Extension manifest
 - DEVELOPMENT_GUIDE.txt# This file
@@ -24,52 +32,150 @@ Feature Design Principles
    - Each feature should be scoped to a specific site or context (e.g., dashboard, documentation).
    - Use clear, separate toggles for each feature in both the popup and the code.
    - Avoid global side effects; only modify the DOM or browser state relevant to your feature.
+   - Implement feature flags to ensure features can be independently enabled/disabled.
 
-2. **State Management**
+2. **Extension Compatibility & Namespace Isolation**
+   - **CSS Namespacing**: Always prefix CSS classes and IDs with `meraki-exp-` to avoid conflicts with other extensions or site styles.
+   - **JavaScript Namespacing**: Use a consistent namespace (e.g., `MerakiExp`) for all global variables and functions.
+   - **DOM Element Isolation**: When injecting elements, use unique IDs/classes and avoid generic names that could conflict.
+   - **Event Handling**: Use event delegation and ensure event listeners are properly scoped to avoid interference.
+   - **Storage Keys**: Prefix all storage keys with `meraki_exp_` to avoid conflicts with other extensions.
+
+3. **State Management**
    - Use `chrome.storage.sync` for feature toggles and settings.
    - Always provide sensible defaults for new settings (see how `enableCopyLink` and `enableGreenFavicon` are handled).
    - When adding a new toggle, update both the popup UI and the content/background scripts to read and react to the new setting.
+   - Use namespaced storage keys to prevent conflicts with other extensions.
 
-3. **Messaging**
+4. **Messaging**
    - Use `chrome.runtime.sendMessage` and `chrome.runtime.onMessage` for communication between popup, background, and content scripts.
    - Use clear message types (e.g., `ENABLE_NEW_FEATURE`) and handle them in a dedicated section of the content script.
+   - Implement message filtering to ensure only relevant messages are processed.
 
-4. **UI Consistency**
+5. **UI Consistency**
    - Follow the existing markup and CSS conventions in `popup.html` and `popup.css`.
    - For new toggle labels, use a unique ID and add it to the CSS selector for label styles (see `#device-name-label, #copy-link-label, #favicon-label`).
    - Use the same row structure and switch classes for new toggles.
    - Test in both light and dark themes.
+   - Ensure all UI elements are properly namespaced.
 
-5. **Avoiding Feature Overlap**
+6. **Avoiding Feature Overlap**
    - Before adding a new feature, check if it could affect the same DOM elements or browser state as an existing feature.
    - Scope DOM queries and mutations to specific containers or selectors.
    - If a feature is only relevant on certain pages, use helper functions like `isDocs()` or `isNDashboard()` to guard your logic.
    - Use feature flags (toggles) to ensure features can be independently enabled/disabled.
+   - Implement proper cleanup when features are disabled.
 
-6. **Performance**
+7. **Performance**
    - Be mindful of MutationObservers and event listeners; avoid unnecessary re-runs or DOM changes.
    - Clean up injected elements or listeners when features are disabled.
+   - Use debouncing for frequently triggered events.
+   - Implement proper error handling to prevent extension crashes.
 
-7. **Accessibility & Semantics**
+8. **Accessibility & Semantics**
    - Use proper ARIA labels and roles for new UI elements.
    - Avoid duplicate IDs in the HTML.
+   - Ensure keyboard navigation works for all new features.
+   - Test with screen readers when possible.
 
-Adding a New Feature - Checklist
--------------------------------
-- [ ] Add a new toggle to the popup UI (HTML, JS, CSS).
-- [ ] Store the toggle state in `chrome.storage.sync` with a sensible default.
-- [ ] Update the content script to read the new setting and implement the feature logic.
-- [ ] Use site/context checks to avoid running the feature where it doesn't belong.
-- [ ] Add message handling for the new feature if it needs to react to popup changes.
-- [ ] Update CSS selectors for label consistency if adding a new label.
-- [ ] Test enabling/disabling the feature and check for side effects on other features.
-- [ ] Test the popup UI in both light and dark themes.
+9. **Cross-Extension Compatibility**
+   - **CSS Conflicts**: Always use specific selectors and avoid generic element styling.
+   - **JavaScript Conflicts**: Use IIFE (Immediately Invoked Function Expression) patterns to avoid global scope pollution.
+   - **DOM Conflicts**: Check for existing elements before creating new ones.
+   - **Event Conflicts**: Use event capturing/bubbling appropriately and avoid stopping propagation unless necessary.
+   - **Storage Conflicts**: Use namespaced storage keys and check for existing data before overwriting.
+
+
+Best Practices for Extension Compatibility
+-----------------------------------------
+1. **CSS Isolation**
+   ```css
+   /* Good - Namespaced */
+   .meraki-exp-feature-toggle { ... }
+   .meraki-exp-popup-container { ... }
+   
+   /* Avoid - Generic */
+   .toggle { ... }
+   .container { ... }
+   ```
+
+2. **JavaScript Isolation**
+   ```javascript
+   // Good - Namespaced
+   const MerakiExp = {
+     featureName: {
+       init() { ... },
+       cleanup() { ... }
+     }
+   };
+   
+   // Avoid - Global pollution
+   function initFeature() { ... }
+   ```
+
+3. **Storage Isolation**
+   ```javascript
+   // Good - Namespaced keys
+   const storageKey = 'meraki_exp_feature_toggle';
+   
+   // Avoid - Generic keys
+   const storageKey = 'feature_toggle';
+   ```
+
+4. **DOM Element Isolation**
+   ```javascript
+   // Good - Unique IDs
+   const elementId = 'meraki-exp-feature-element';
+   
+   // Avoid - Generic IDs
+   const elementId = 'feature-element';
+   ```
+
+5. **Event Handling**
+   ```javascript
+   // Good - Scoped event handling
+   document.addEventListener('click', (e) => {
+     if (e.target.closest('.meraki-exp-feature')) {
+       // Handle event
+     }
+   });
+   
+   // Avoid - Global event handling
+   document.addEventListener('click', handleClick);
+   ```
+
+Error Handling & Debugging
+--------------------------
+- Implement try-catch blocks around critical functionality
+- Use console logging for debugging (remove in production)
+- Handle storage errors gracefully
+- Implement fallbacks for when features fail to load
+- Test error scenarios (network issues, storage failures, etc.)
+
+Performance Considerations
+--------------------------
+- Minimize DOM queries and mutations
+- Use efficient selectors (avoid `*` selectors)
+- Implement proper cleanup for observers and listeners
+- Use debouncing for frequently triggered events
+- Avoid blocking the main thread with heavy operations
+
+Security Considerations
+-----------------------
+- Sanitize all user input
+- Validate data before storing or processing
+- Use Content Security Policy appropriately
+- Avoid eval() and similar dangerous functions
+- Implement proper error handling to prevent information leakage
 
 Other Important Notes
 --------------------
-- Keep code modular and functions small.
-- Use console logging for debugging, but remove or minimize logs in production.
-- Document any non-obvious logic in comments.
-- Review the latest code for recent changes before starting work.
+- Keep code modular and functions small
+- Use console logging for debugging, but remove or minimize logs in production
+- Document any non-obvious logic in comments
+- Review the latest code for recent changes before starting work
+- Test thoroughly across different environments and configurations
+- Consider the impact of changes on existing users
+- Follow semantic versioning for releases
 
 For questions or to propose major changes, please open an issue or discuss with the maintainers. 

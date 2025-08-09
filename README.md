@@ -6,6 +6,16 @@
 
 A browser extension for Chrome, Firefox, and Safari (WebExtensions API) that dynamically enhances the experience for Meraki-related pages. The extension provides intelligent tab management, enhanced documentation features, and universal text replacement capabilities.
 
+## ⚠️ Important Notice
+
+**This extension relies heavily on the design and structure of the target websites it operates on. If the structure of these websites changes significantly, the extension code will need to be updated accordingly to maintain functionality.**
+
+### What This Means
+- The extension uses DOM selectors and page structure to identify and enhance specific elements
+- Website redesigns, layout changes, or structural modifications may break extension features
+- Regular maintenance and updates may be required to keep the extension working properly
+- Users should report issues when features stop working after website updates
+
 ## Features
 
 ### 🎯 Smart Tab Management
@@ -66,6 +76,21 @@ The extension works automatically once loaded. Use the popup interface to:
 - Code is modular and commented for maintainability
 - TypeScript is recommended for future improvements
 - Follows ESLint rules for code quality
+- **Website Structure Dependency**: Features are tightly coupled to specific DOM structures and may require updates when target websites change
+
+## Troubleshooting
+
+### Common Issues
+- **Features not working**: Check if the target website has been updated recently
+- **Extension not loading**: Ensure all files are properly copied and permissions are granted
+- **UI not displaying**: Check browser console for errors and verify manifest.json is valid
+
+### Reporting Issues
+When reporting issues, please include:
+- Browser version and extension version
+- Target website URL and page type
+- Description of expected vs. actual behavior
+- Any error messages from the browser console
 
 ## License
 
