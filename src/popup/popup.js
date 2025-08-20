@@ -13,6 +13,10 @@ const faviconToggle = document.getElementById('favicon-toggle');
 const faviconLabel = document.getElementById('favicon-label');
 const textReplacementToggle = document.getElementById('text-replacement-toggle');
 const textReplacementLabel = document.getElementById('text-replacement-label');
+const quickToolsToggle = document.getElementById('quick-tools-toggle');
+const quickToolsLabel = document.getElementById('quick-tools-label');
+const easyCopyToggle = document.getElementById('easy-copy-toggle');
+const easyCopyLabel = document.getElementById('easy-copy-label');
 const manageTextReplacementBtn = document.getElementById('manage-text-replacement-btn');
 const manageTextReplacementContainer = document.getElementById('manage-text-replacement');
 
@@ -21,8 +25,10 @@ function setSubFeatureTogglesEnabled(enabled) {
   if (copyLinkToggle) copyLinkToggle.disabled = !enabled;
   if (faviconToggle) faviconToggle.disabled = !enabled;
   if (textReplacementToggle) textReplacementToggle.disabled = !enabled;
+  if (quickToolsToggle) quickToolsToggle.disabled = !enabled;
+  if (easyCopyToggle) easyCopyToggle.disabled = !enabled;
   // Add a class to visually gray out the rows
-  document.querySelectorAll('.device-name-row, .copy-link-row, .text-replacement-row').forEach(row => {
+  document.querySelectorAll('.device-name-row, .copy-link-row, .text-replacement-row, .quick-tools-row, .easy-copy-row').forEach(row => {
     if (!enabled) {
       row.classList.add('disabled-row');
     } else {
@@ -37,7 +43,7 @@ function loadState() {
     toggleLabel.textContent = response.enabled ? 'Enabled' : 'Disabled';
     setSubFeatureTogglesEnabled(response.enabled);
   });
-  chrome.storage.sync.get(['useModelMac', 'enableCopyLink', 'enableGreenFavicon', 'textReplacementEnabled', 'enabled'], (result) => {
+  chrome.storage.sync.get(['useModelMac', 'enableCopyLink', 'enableGreenFavicon', 'textReplacementEnabled', 'enabled', 'enableQuickTools', 'enableEasyCopy'], (result) => {
     if (modelMacToggle) {
       modelMacToggle.checked = !!result.useModelMac;
     }
@@ -59,6 +65,18 @@ function loadState() {
         chrome.storage.sync.set({ textReplacementEnabled: false });
       }
       updateManageButtonVisibility(); // Update based on both states
+    }
+    if (quickToolsToggle) {
+      quickToolsToggle.checked = result.enableQuickTools !== undefined ? !!result.enableQuickTools : true;
+      if (result.enableQuickTools === undefined) {
+        chrome.storage.sync.set({ enableQuickTools: true });
+      }
+    }
+    if (easyCopyToggle) {
+      easyCopyToggle.checked = result.enableEasyCopy !== undefined ? !!result.enableEasyCopy : true;
+      if (result.enableEasyCopy === undefined) {
+        chrome.storage.sync.set({ enableEasyCopy: true });
+      }
     }
   });
 }
@@ -163,6 +181,46 @@ if (textReplacementToggle) {
         for (const tab of tabs) {
           if (tab.id) {
             chrome.tabs.sendMessage(tab.id, { type: 'TEXT_REPLACEMENT_TOGGLE', enabled }, () => {
+              if (chrome.runtime.lastError) {
+                // Suppress 'Could not establish connection' errors
+              }
+            });
+          }
+        }
+      });
+    });
+  });
+}
+
+if (quickToolsToggle) {
+  quickToolsToggle.addEventListener('change', () => {
+    const enabled = quickToolsToggle.checked;
+    chrome.storage.sync.set({ enableQuickTools: enabled }, () => {
+      showStatus('Omni-Channel status buttons ' + (enabled ? 'enabled' : 'disabled'));
+      chrome.tabs.query({}, (tabs) => {
+        for (const tab of tabs) {
+          if (tab.id) {
+            chrome.tabs.sendMessage(tab.id, { type: 'QUICK_TOOLS_TOGGLE', enabled }, () => {
+              if (chrome.runtime.lastError) {
+                // Suppress 'Could not establish connection' errors
+              }
+            });
+          }
+        }
+      });
+    });
+  });
+}
+
+if (easyCopyToggle) {
+  easyCopyToggle.addEventListener('change', () => {
+    const enabled = easyCopyToggle.checked;
+    chrome.storage.sync.set({ enableEasyCopy: enabled }, () => {
+      showStatus('Easy copy ' + (enabled ? 'enabled' : 'disabled'));
+      chrome.tabs.query({}, (tabs) => {
+        for (const tab of tabs) {
+          if (tab.id) {
+            chrome.tabs.sendMessage(tab.id, { type: 'EASY_COPY_TOGGLE', enabled }, () => {
               if (chrome.runtime.lastError) {
                 // Suppress 'Could not establish connection' errors
               }

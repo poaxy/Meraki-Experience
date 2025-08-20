@@ -4,7 +4,7 @@
   <img src="M-E.png" alt="Meraki Experience Logo" width="128" height="128">
 </div>
 
-A browser extension for Chrome, Firefox, and Safari (WebExtensions API) that dynamically enhances the experience for Meraki-related pages. The extension provides intelligent tab management, enhanced documentation features, and universal text replacement capabilities.
+A browser extension for Chrome, Firefox, and Safari (WebExtensions API) that dynamically enhances the experience for Meraki-related pages. The extension provides intelligent tab management, enhanced documentation features, universal text replacement capabilities, and **Omni-Channel Quick Tools** for Salesforce Lightning pages.
 
 ## ⚠️ Important Notice
 
@@ -33,6 +33,13 @@ A browser extension for Chrome, Firefox, and Safari (WebExtensions API) that dyn
 - **Smart Content Enhancement**: Automatically enhances content based on context
 - **Configurable Features**: Toggle functionality on/off as needed
 
+### ⚡ Omni-Channel Quick Tools (NEW in v2.0!)
+- **Status Button Shortcuts**: Direct access to all Omni-Channel status options from the utility bar
+- **Drag & Drop Reordering**: Customize button layout by dragging buttons to preferred positions
+- **Visual Status Indicators**: Color-coded indicators for different status types (Green: Ready, Orange: Busy/Away, Red: Offline)
+- **Persistent Customization**: Button order is saved and remembered across sessions
+- **Single-Click Status Changes**: Change status with one click instead of multiple navigation steps
+
 ### 🎨 User Experience
 - **Modern Interface**: Clean, intuitive popup interface with toggles for all features
 - **Theme Support**: Light and dark mode support for comfortable viewing
@@ -54,6 +61,21 @@ The extension works automatically once loaded. Use the popup interface to:
 - Enable/disable specific features
 - Configure tab naming preferences
 - Access documentation enhancements
+
+### 🚀 Quick Tools Usage
+
+**Omni-Channel Quick Tools** are available on `meraki.lightning.force.com` pages:
+
+1. **Enable Quick Tools**: Toggle "Omni-Channel status buttons" in the extension popup
+2. **Status Buttons**: 9 status buttons appear in the bottom utility bar
+3. **Change Status**: Click any button to instantly change your Omni-Channel status
+4. **Customize Layout**: Drag and drop buttons to reorder them as preferred
+5. **Visual Indicators**: 
+   - 🟢 Green: Ready statuses (Deferred Work, Inbound Call)
+   - 🟠 Orange: Busy/Away statuses (Approved Busy, Break, Lunch, Meeting, Third Party Bridge, Wrap Up)
+   - 🔴 Red: Offline status
+
+**Note**: Quick Tools require the main extension to be enabled and work specifically on Salesforce Lightning pages.
 
 ## Permissions
 

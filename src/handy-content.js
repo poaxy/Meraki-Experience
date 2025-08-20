@@ -127,6 +127,11 @@ if (typeof window.handyInitialized === 'undefined') {
   // Inject content script into iframe
   const injectIntoIframe = (iframe) => {
     try {
+      // Skip if iframe is already processed
+      if (iframe.dataset.handyProcessed) {
+        return;
+      }
+      
       const currentScript = document.currentScript || document.querySelector('script[src*="handy-content.js"]');
       let extensionId = '';
       
@@ -150,6 +155,9 @@ if (typeof window.handyInitialized === 'undefined') {
           return;
         }
       }
+      
+      // Mark iframe as processed to prevent duplicate injection
+      iframe.dataset.handyProcessed = 'true';
       
       setTimeout(() => {
         try {
@@ -178,11 +186,15 @@ if (typeof window.handyInitialized === 'undefined') {
             iframeDoc.head.appendChild(replacerScript);
           }
         } catch (error) {
-          // Cross-origin iframe, can't access
+          // Cross-origin iframe, can't access - remove the processed flag
+          delete iframe.dataset.handyProcessed;
         }
       }, 1000);
     } catch (error) {
-      // Iframe not accessible
+      // Iframe not accessible - remove the processed flag
+      if (iframe.dataset) {
+        delete iframe.dataset.handyProcessed;
+      }
     }
   };
 
@@ -308,12 +320,14 @@ if (typeof window.handyInitialized === 'undefined') {
     
     iframeInjectionInterval = setInterval(() => {
       try {
-        const iframes = document.querySelectorAll('iframe');
-        iframes.forEach(iframe => {
-          injectIntoIframe(iframe);
-        });
+        const iframes = document.querySelectorAll('iframe:not([data-handy-processed])');
+        if (iframes.length > 0) {
+          iframes.forEach(iframe => {
+            injectIntoIframe(iframe);
+          });
+        }
       } catch (error) {
-        // Error monitoring iframes
+        console.warn('[MerakiExt] Error monitoring iframes:', error);
       }
     }, 5000);
   };

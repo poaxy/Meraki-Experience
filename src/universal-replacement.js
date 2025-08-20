@@ -477,41 +477,55 @@ if (typeof window.UniversalReplacer === 'undefined') {
       this.enabled = enabled;
     }
 
-    formatTextForContentEditable(text) {
+    // Unified text formatting with different output types
+    formatText(text, outputType = 'contenteditable') {
+      const baseFormatted = this.escapeHtml(text);
+      
+      switch (outputType) {
+        case 'contenteditable':
+          return baseFormatted
+            .replace(/\n/g, '<br>')
+            .replace(/  /g, '&nbsp;&nbsp;')
+            .replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
+        case 'html':
+          return baseFormatted
+            .replace(/\n/g, '<br>')
+            .replace(/  /g, '&nbsp;&nbsp;')
+            .replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
+        case 'plain':
+          return baseFormatted;
+        case 'exec':
+          return baseFormatted;
+        default:
+          return baseFormatted;
+      }
+    }
+
+    // Escape HTML characters
+    escapeHtml(text) {
       return text
-        .replace(/\n/g, '<br>')
-        .replace(/  /g, '&nbsp;&nbsp;')
-        .replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // Legacy method names for backward compatibility
+    formatTextForContentEditable(text) {
+      return this.formatText(text, 'contenteditable');
     }
 
     formatTextForHTML(text) {
-      return text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;')
-        .replace(/\n/g, '<br>')
-        .replace(/  /g, '&nbsp;&nbsp;')
-        .replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
+      return this.formatText(text, 'html');
     }
 
     formatTextForPlainText(text) {
-      return text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+      return this.formatText(text, 'plain');
     }
 
     formatTextForExecCommand(text) {
-      return text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+      return this.formatText(text, 'exec');
     }
 
     getTextOffsetFromRange(range, target) {

@@ -1,23 +1,65 @@
+/* Browser-specific popup window styling */
+html {
+  border-radius: 0;
+  overflow: hidden;
+  background: #fff;
+  width: 360px;
+  height: 420px;
+  min-height: 420px;
+  /* Ensure no unwanted spacing */
+  margin: 0;
+  padding: 0;
+  /* Force the popup to fill the entire window */
+  box-sizing: border-box;
+}
+
+/* Ensure the entire popup window has rounded corners */
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'San Francisco', 'Segoe UI', Roboto, Arial, sans-serif;
-  background: #f4f4f4;
+  background: #fff;
   color: #222;
   margin: 0;
   padding: 0;
   min-width: 320px;
   min-height: 0;
   transition: background 0.3s, color 0.3s;
+  border-radius: 0;
+  overflow: hidden;
+  /* Remove the shadow since we can't make the window itself rounded */
+  box-shadow: none;
+  /* Ensure the popup window itself has rounded corners */
+  border: none;
+  outline: none;
+  /* Force the popup window to have rounded corners */
+  -webkit-appearance: none;
+  appearance: none;
+  /* Set proper dimensions */
+  width: 100%;
+  height: 420px;
+  /* Ensure no unwanted spacing */
+  box-sizing: border-box;
+  /* Force the popup to fill the entire window */
+  position: relative;
 }
 
 .container {
   padding: 24px 16px 24px 16px;
+  background: #fff;
+  margin: 0;
+  max-width: 360px;
+  transition: background 0.3s;
+  min-height: 0;
+  /* Add rounded corners to the content area instead */
   border-radius: 18px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-  background: #fff;
-  margin: 0 auto;
-  max-width: 360px;
-  transition: background 0.3s, box-shadow 0.3s;
-  min-height: 0;
+  /* Ensure the container fills the available space */
+  width: calc(100% - 16px);
+  box-sizing: border-box;
+  /* Add some margin to create visual breathing room */
+  margin: 8px;
+  /* Ensure proper height for popup context */
+  height: calc(100% - 16px);
+  min-height: 380px;
 }
 
 .title {
@@ -84,8 +126,8 @@ body {
 
 .theme-toggle-row {
   position: absolute;
-  top: 12px;
-  left: 12px;
+  top: 20px;
+  left: 20px;
   z-index: 20;
 }
 #theme-toggle {
@@ -106,7 +148,9 @@ body {
 
 .device-name-row,
 .copy-link-row,
-.text-replacement-row {
+.text-replacement-row,
+.quick-tools-row,
+.easy-copy-row {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -117,19 +161,25 @@ body {
 }
 .device-switch,
 .copy-link-switch,
-.text-replacement-switch {
+.text-replacement-switch,
+.quick-tools-switch,
+.easy-copy-switch {
   width: 36px;
   height: 20px;
 }
 .device-switch .slider,
 .copy-link-switch .slider,
-.text-replacement-switch .slider {
+.text-replacement-switch .slider,
+.quick-tools-switch .slider,
+.easy-copy-switch .slider {
   height: 20px;
   width: 36px;
 }
 .device-switch .slider:before,
 .copy-link-switch .slider:before,
-.text-replacement-switch .slider:before {
+.text-replacement-switch .slider:before,
+.quick-tools-switch .slider:before,
+.easy-copy-switch .slider:before {
   position: absolute;
   content: "";
   height: 16px;
@@ -144,13 +194,17 @@ body {
 }
 .device-switch input:checked + .slider:before,
 .copy-link-switch input:checked + .slider:before,
-.text-replacement-switch input:checked + .slider:before {
+.text-replacement-switch input:checked + .slider:before,
+.quick-tools-switch input:checked + .slider:before,
+.easy-copy-switch input:checked + .slider:before {
   transform: translateX(16px);
 }
 #device-name-label,
 #copy-link-label,
 #favicon-label,
-#text-replacement-label {
+#text-replacement-label,
+#quick-tools-label,
+#easy-copy-label {
   font-size: 0.98rem;
   color: #888;
   user-select: none;
@@ -185,26 +239,47 @@ body {
   display: none;
 }
 
+/* Disabled state for toggle rows */
 .disabled-row {
   opacity: 0.5;
   pointer-events: none;
 }
 
+.disabled-row input[type="checkbox"] {
+  cursor: not-allowed;
+}
+
+
+
+
+/* Dark theme support */
 @media (prefers-color-scheme: dark) {
+  html {
+    border-radius: 0;
+    background: #232326;
+  }
   body {
-    background: #18181a;
+    background: #232326;
     color: #f4f4f4;
+    box-shadow: none;
   }
   .container {
-    box-shadow: 0 4px 24px rgba(0,0,0,0.18);
     background: #232326;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.18);
   }
 }
 
 body.dark-theme {
-  background: #18181a;
+  background: #232326;
   color: #f4f4f4;
+  box-shadow: none;
 }
+
+body.dark-theme html {
+  border-radius: 0;
+  background: #232326;
+}
+
 body.dark-theme .container {
   background: #232326;
   box-shadow: 0 4px 24px rgba(0,0,0,0.18);
@@ -217,6 +292,9 @@ body.dark-theme #theme-icon {
 }
 body.dark-theme .device-name-row #device-name-label,
 body.dark-theme .copy-link-row #copy-link-label,
-body.dark-theme .text-replacement-row #text-replacement-label {
+body.dark-theme .text-replacement-row #text-replacement-label,
+body.dark-theme .quick-tools-row #quick-tools-label,
+body.dark-theme .device-name-row #favicon-label,
+body.dark-theme .easy-copy-row #easy-copy-label {
   color: #aaa;
 }

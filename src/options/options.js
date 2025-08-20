@@ -11,6 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const exportButton = document.getElementById('export-button');
   const importFile = document.getElementById('import-file');
   const charCounter = document.getElementById('char-counter');
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
 
   let replacements = {};
   let currentlyEditing = null;
@@ -140,6 +142,12 @@ document.addEventListener('DOMContentLoaded', () => {
     textContainer.appendChild(saveEditButton);
     textContainer.appendChild(cancelEditButton);
 
+    // Remove existing actions container while editing
+    const existingActions = item.querySelector('.actions');
+    if (existingActions) {
+      existingActions.remove();
+    }
+
     keywordInput.focus();
     keywordInput.select();
   };
@@ -238,6 +246,12 @@ document.addEventListener('DOMContentLoaded', () => {
     textContainer.appendChild(arrowSpan);
     textContainer.appendChild(replacementSpan);
 
+    // Remove existing actions container and create a new one
+    const existingActions = item.querySelector('.actions');
+    if (existingActions) {
+      existingActions.remove();
+    }
+    
     const actions = document.createElement('div');
     actions.className = 'actions';
 
@@ -414,4 +428,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Load initial data
   loadData();
+  
+  // Theme functionality
+  function setTheme(theme) {
+    if (theme === 'dark') {
+      document.body.classList.add('dark-theme');
+      if (themeIcon) themeIcon.src = '../popup/moon.png';
+    } else {
+      document.body.classList.remove('dark-theme');
+      if (themeIcon) themeIcon.src = '../popup/sun.png';
+    }
+    saveTheme(theme);
+  }
+
+  function saveTheme(theme) {
+    chrome.storage.sync.set({ popupTheme: theme });
+  }
+
+  function loadTheme() {
+    chrome.storage.sync.get(['popupTheme'], (result) => {
+      const theme = result.popupTheme || 'light';
+      setTheme(theme);
+      if (themeToggle) {
+        themeToggle.setAttribute('data-theme', theme);
+      }
+    });
+  }
+
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      const isDark = document.body.classList.contains('dark-theme');
+      const newTheme = isDark ? 'light' : 'dark';
+      setTheme(newTheme);
+      themeToggle.setAttribute('data-theme', newTheme);
+    });
+  }
+
+  // Load theme
+  loadTheme();
 });
